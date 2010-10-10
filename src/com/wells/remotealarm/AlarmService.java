@@ -1,5 +1,4 @@
 package com.wells.remotealarm;
-import java.io.IOException;
 import java.util.Calendar;
 
 import android.R;
@@ -10,12 +9,14 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.util.Log;
 
+import com.wells.remotealarm.alarm.SteppedAlarm;
+import com.wells.remotealarm.alarm.SteppedAlarmStateListener;
 import com.wells.remotealarm.comm.BluetoothClient;
 import com.wells.remotealarm.listeners.AcknowledgedListener;
 
@@ -91,6 +92,8 @@ public class AlarmService extends Service {
 		private AlarmServer server;
 		private MediaPlayer player;
 		private Vibrator vibrator;
+		
+		private SteppedAlarm alarm;
 
 		@Override
 		public void activate() {
@@ -106,8 +109,8 @@ public class AlarmService extends Service {
 			
 			
 	        Calendar time = Calendar.getInstance();
-	        time.add(Calendar.MINUTE, 25);
-//	        time.add(Calendar.SECOND, 15);
+//	        time.add(Calendar.MINUTE, 25);
+	        time.add(Calendar.SECOND, 15);
 	        Intent intent = new Intent(AlarmService.this, AReceiver.class);
 	        pending = PendingIntent.getBroadcast(AlarmService.this, 951753, intent, 0);
 	        mAlarmManager.set(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), pending);
@@ -126,41 +129,27 @@ public class AlarmService extends Service {
 		public void timer_elapsed() {
 			showNotification();
 			
-			vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
-			vibrator.vibrate(new long[] {1000, 500, 400}, 1);
-		
-			AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-	        manager.setStreamVolume(AudioManager.STREAM_ALARM, manager.getStreamMaxVolume(AudioManager.STREAM_ALARM)/*/6*/, 0);
-	        
-	        player = new MediaPlayer();
-	        
-	        try {
-				player.setDataSource("/sdcard/media/audio/ringtones/Audio_House.mp3");
-//	        	player.setDataSource(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
-			} catch (IllegalArgumentException e) {
-				mBtClient.alarm_fail(e.toString());
-			} catch (IllegalStateException e) {
-				mBtClient.alarm_fail(e.toString());
-			} catch (IOException e) {
-				mBtClient.alarm_fail(e.toString());
-			}
-			player.setAudioStreamType(AudioManager.STREAM_ALARM);
-	        player.setLooping(true);
-	        try {
-				player.prepare();
-			} catch (IllegalStateException e) {
-				mBtClient.alarm_fail(e.toString());
-			} catch (IOException e) {
-				mBtClient.alarm_fail(e.toString());
-			}
-	        player.start();
+			alarm = new SteppedAlarm(getApplicationContext());
+			alarm.setStatusListener(new SteppedAlarmStateListener(){
+
+				@Override
+				public void stateChanged(int state) {
+					Log.i("ALARM", "State changed to " + state);
+					
+				}
+
+				@Override
+				public void stateProgressChanged(int progress) {
+					Log.i("ALARM", "Progress changed to " + progress);
+					
+				}});
+			alarm.activate();
 	        mBtClient.alarm_sounding();
 	        
 		} 
 		
 		private void timer_stopped() {
-			vibrator.cancel();
-			player.stop();
+			alarm.deactivate();
 			mBtClient.alarm_canceled();
 			mNotifyManager.cancel(135);
 		}

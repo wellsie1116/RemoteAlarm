@@ -35,6 +35,7 @@ public abstract class AlarmState {
 													env.svcAudioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM),
 													0);
 				env.audio.setDataSource(audioPath());
+//	        	env.audio.setDataSource(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
 				env.audio.setAudioStreamType(AudioManager.STREAM_ALARM);
 		        env.audio.setLooping(true);
 		        env.audio.prepare();
