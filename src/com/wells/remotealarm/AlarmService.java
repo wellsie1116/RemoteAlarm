@@ -107,10 +107,15 @@ public class AlarmService extends Service {
 			
 	        Calendar time = Calendar.getInstance();
 	        time.add(Calendar.MINUTE, 25);
+//	        time.add(Calendar.MINUTE, 2);
 //	        time.add(Calendar.SECOND, 15);
 	        Intent intent = new Intent(AlarmService.this, AReceiver.class);
 	        pending = PendingIntent.getBroadcast(AlarmService.this, 951753, intent, 0);
 	        mAlarmManager.set(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), pending);
+	        
+	        //let the user know we are timing
+	        Vibrator buzz = (Vibrator)getSystemService(VIBRATOR_SERVICE);
+	        buzz.vibrate(1000);
 		}
 		
 		@Override
@@ -126,8 +131,11 @@ public class AlarmService extends Service {
 		public void timer_elapsed() {
 			showNotification();
 			
+			//it his served its purpose
+			pending = null;
+			
 			vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
-			vibrator.vibrate(new long[] {1000, 500, 400}, 1);
+			vibrator.vibrate(new long[] {0, 500, 400}, 1);
 		
 			AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
 	        manager.setStreamVolume(AudioManager.STREAM_ALARM, manager.getStreamMaxVolume(AudioManager.STREAM_ALARM)/*/6*/, 0);
@@ -156,13 +164,29 @@ public class AlarmService extends Service {
 	        player.start();
 	        mBtClient.alarm_sounding();
 	        
-		} 
+		}
 		
 		private void timer_stopped() {
-			vibrator.cancel();
-			player.stop();
+			if (pending != null) {
+				pending.cancel();
+				pending = null;
+			}
+			if (vibrator != null) {
+				vibrator.cancel();
+				vibrator = null;
+			}				
+			if (player != null) {
+				player.stop();
+				player = null;
+			}
+			
+			
 			mBtClient.alarm_canceled();
 			mNotifyManager.cancel(135);
+			
+			//let the user know we are timing
+	        Vibrator buzz = (Vibrator)getSystemService(VIBRATOR_SERVICE);
+	        buzz.vibrate(new long[] {300, 400, 300}, -1);
 		}
 	}
 	
