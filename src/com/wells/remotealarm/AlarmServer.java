@@ -2,9 +2,8 @@ package com.wells.remotealarm;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.UUID;
-
-import org.json.JSONTokener;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -15,6 +14,19 @@ import com.wells.remotealarm.comm.BluetoothIO;
 import com.wells.remotealarm.listeners.AcknowledgedListener;
 
 public class AlarmServer {
+	/* Socket Communication Examples
+	 * 
+	 * Deactivate Alarm
+	 * Client: ack
+	 * Server: ok
+	 * 
+	 * Query Alarm Status
+	 * Client: inq
+	 * Server: ok
+	 * Server: [deactivated, pending [time remaining], alarming <time elapsed> <stage> <numstages> <progress>] 
+	 * 
+	 * 
+	 */
 
 	public AlarmServer() {
 		bt = BluetoothAdapter.getDefaultAdapter();
@@ -43,6 +55,25 @@ public class AlarmServer {
 	
 	public void setAcknowledgedListener(AcknowledgedListener listener) {
 		acknowledgedListener = listener;
+	}
+	
+	private boolean handleRequest(String cmd, OutputStream sout) throws IOException {
+		//TODO: implement
+		
+		StringBuilder res = new StringBuilder();
+		
+		if ("ack".equals(cmd)) {
+			acknowledgedListener.acknowledged(cmd); //TODO: threadsafe
+		} else if ("inq".equals(cmd)) {
+			res.append("Unknown\n");
+		} else {
+			BluetoothIO.sendError(sout, "Invalid command");
+			return false;
+		}
+		
+		BluetoothIO.sendSuccess(sout);
+		sout.write(res.toString().getBytes());
+		return true;
 	}
 	
 	private class BluetoothServer extends Thread {
@@ -74,16 +105,18 @@ public class AlarmServer {
 //					activeSocket = sock;
 					
 					InputStream sin = sock.getInputStream();
-					byte[] data = new byte[255];
+					OutputStream sout = sock.getOutputStream();
 					while (true) {
 						try {
 							String cmd = BluetoothIO.readCommand(sin);
-							acknowledgedListener.acknowledged(cmd); //TODO: threadsafe
+							if (!handleRequest(cmd, sout))
+								break;
 						} catch (IOException ex) {
 							break;
 						}
 					}				
 					sin.close();
+					sout.close();
 				}
 				server.close();
 			} catch (IOException ex) {

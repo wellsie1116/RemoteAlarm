@@ -11,7 +11,7 @@ public class BluetoothIO {
 		sout.write(data);
 	}
 	
-	public static String readCommand(InputStream sin) throws IOException{
+	public static String readCommand(InputStream sin) throws IOException {
 		byte buf[] = new byte[256];
 		StringBuilder command = new StringBuilder();
 		int len = 0;
@@ -19,6 +19,14 @@ public class BluetoothIO {
 			command.append(new String(buf, 0, len));
 		command.append(new String(buf, 0, len - 1)); //don't copy the newline
 		return command.toString();
+	}
+	
+	public static void sendSuccess(OutputStream sout) throws IOException {
+		sout.write("ok".getBytes());		
+	}
+	
+	public static void sendError(OutputStream sout, String msg) throws IOException {
+		sout.write(("oops " + msg).getBytes());		
 	}
 	
 }
