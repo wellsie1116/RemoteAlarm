@@ -2,10 +2,12 @@ package com.wells.remotealarm.alarm;
 
 import java.io.IOException;
 
-import android.content.Context;
 import android.media.AudioManager;
+import android.util.Log;
 
 public abstract class AlarmState {
+	
+	private static final String TAG = "AlarmState";
 	
 	protected SteppedAlarm.AlarmEnvironment env;
 	
@@ -55,7 +57,8 @@ public abstract class AlarmState {
 		try {
 			applyAudioState(current);	
 		} catch (IOException ex) {
-			//TODO: Log error
+			Log.e(TAG, ex.toString());
+			//TODO: log error (to server)
 		}
 		applyVibratorState(current);
 		
