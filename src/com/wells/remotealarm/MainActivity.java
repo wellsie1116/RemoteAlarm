@@ -9,11 +9,15 @@ import android.os.IBinder;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	
     private TextView lblText;
+    private EditText txtHours;
+    private EditText txtMinutes;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -21,6 +25,8 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main);
       
         lblText = (TextView)findViewById(R.id.lblText);
+        txtHours = (EditText)findViewById(R.id.txtHours);
+        txtMinutes = (EditText)findViewById(R.id.txtMinutes);
         
         Button btnStart = (Button)findViewById(R.id.btnStart);
         
@@ -62,8 +68,21 @@ public class MainActivity extends Activity {
     
     private void btnStart_clicked() {
     	
+    	int minutes;
+    	int hours;
+    	try {
+    		minutes = Integer.parseInt(txtMinutes.getText().toString());
+    		hours = Integer.parseInt(txtHours.getText().toString());
+        	Toast.makeText(getApplicationContext(), String.format("Time: %02d:%02d", hours, minutes), 1000).show();
+    	} catch (NumberFormatException ex) {
+    		Toast.makeText(getApplicationContext(), "Invalid minutes", 2000).show();
+    		return;
+    	}
+    	
         Intent call = new Intent(this, AlarmService.class);
         call.putExtra("call", "register");
+        call.putExtra("hours", hours);
+        call.putExtra("minutes", minutes);
         startService(call);
     	
     }

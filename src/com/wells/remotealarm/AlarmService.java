@@ -42,6 +42,10 @@ public class AlarmService extends Service {
 			if ("timer_elapsed".equals(method)) {		
 				mBinder.timer_elapsed();
 			} else if ("register".equals(method)) {
+				int minutes = intent.getIntExtra("minutes", -1);
+				int hours = intent.getIntExtra("hours", -1);
+				mBinder.setMinutes(minutes);
+				mBinder.setHours(hours);
 				mBinder.activate();
 			}
 		}
@@ -91,6 +95,17 @@ public class AlarmService extends Service {
 		private AlarmServer server;
 		private MediaPlayer player;
 		private Vibrator vibrator;
+		
+		private int hours = 0;
+		private int minutes = 25;
+		
+		public void setHours(int hours) {
+			this.hours = hours;
+		}
+		
+		public void setMinutes(int minutes) {
+			this.minutes = minutes;
+		}
 
 		@Override
 		public void activate() {
@@ -106,7 +121,10 @@ public class AlarmService extends Service {
 			
 			
 	        Calendar time = Calendar.getInstance();
-	        time.add(Calendar.MINUTE, 25);
+	        if (this.hours > 0)
+	        	time.add(Calendar.HOUR, this.hours);
+	        if (this.minutes > 0)
+	        	time.add(Calendar.MINUTE, this.minutes);
 //	        time.add(Calendar.MINUTE, 2);
 //	        time.add(Calendar.SECOND, 15);
 	        Intent intent = new Intent(AlarmService.this, AReceiver.class);

@@ -39,7 +39,7 @@ public class AlarmServer {
 	private AcknowledgedListener acknowledgedListener;
 	
 	public void activate() {
-		//We shouldn't modify the adapter state, its not nice
+		//We shouldn't modify the adapter state, it's not nice
 		/*btWasOn = bt.getState() == BluetoothAdapter.STATE_ON || bt.getState() == BluetoothAdapter.STATE_TURNING_ON;
         if (!btWasOn) {
         	bt.enable();
