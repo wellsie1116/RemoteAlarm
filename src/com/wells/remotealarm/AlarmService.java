@@ -1,5 +1,4 @@
 package com.wells.remotealarm;
-import java.io.IOException;
 import java.util.Calendar;
 
 import android.R;
@@ -10,17 +9,21 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.util.Log;
 
+import com.wells.remotealarm.alarm.SteppedAlarm;
+import com.wells.remotealarm.alarm.SteppedAlarmStateListener;
 import com.wells.remotealarm.comm.BluetoothClient;
 import com.wells.remotealarm.listeners.AcknowledgedListener;
 
 
 public class AlarmService extends Service {
+	
+	private static final String TAG = "AlarmService";
 
 	private NotificationManager mNotifyManager;
 	private AlarmManager mAlarmManager;
@@ -37,16 +40,18 @@ public class AlarmService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent.hasExtra("call")) {
-			String method = intent.getStringExtra("call");
-			if ("timer_elapsed".equals(method)) {		
-				mBinder.timer_elapsed();
-			} else if ("register".equals(method)) {
-				int minutes = intent.getIntExtra("minutes", -1);
-				int hours = intent.getIntExtra("hours", -1);
-				mBinder.setMinutes(minutes);
-				mBinder.setHours(hours);
-				mBinder.activate();
+		if (intent != null) {
+			if (intent.hasExtra("call")) {
+				String method = intent.getStringExtra("call");
+				if ("timer_elapsed".equals(method)) {		
+					mBinder.timer_elapsed();
+				} else if ("register".equals(method)) {
+					int minutes = intent.getIntExtra("minutes", -1);
+					int hours = intent.getIntExtra("hours", -1);
+					mBinder.setMinutes(minutes);
+					mBinder.setHours(hours);
+					mBinder.activate();
+				}
 			}
 		}
 		return START_STICKY;
@@ -96,6 +101,8 @@ public class AlarmService extends Service {
 		private MediaPlayer player;
 		private Vibrator vibrator;
 		
+		private SteppedAlarm alarm;
+
 		private int hours = 0;
 		private int minutes = 25;
 		
@@ -127,6 +134,7 @@ public class AlarmService extends Service {
 	        	time.add(Calendar.MINUTE, this.minutes);
 //	        time.add(Calendar.MINUTE, 2);
 //	        time.add(Calendar.SECOND, 15);
+
 	        Intent intent = new Intent(AlarmService.this, AReceiver.class);
 	        pending = PendingIntent.getBroadcast(AlarmService.this, 951753, intent, 0);
 	        mAlarmManager.set(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), pending);
@@ -149,56 +157,29 @@ public class AlarmService extends Service {
 		public void timer_elapsed() {
 			showNotification();
 			
-			//it his served its purpose
-			pending = null;
-			
-			vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
-			vibrator.vibrate(new long[] {0, 500, 400}, 1);
-		
-			AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-	        manager.setStreamVolume(AudioManager.STREAM_ALARM, manager.getStreamMaxVolume(AudioManager.STREAM_ALARM)/*/6*/, 0);
-	        
-	        player = new MediaPlayer();
-	        
-	        try {
-				player.setDataSource("/sdcard/media/audio/ringtones/Audio_House.mp3");
-//	        	player.setDataSource(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
-			} catch (IllegalArgumentException e) {
-				mBtClient.alarm_fail(e.toString());
-			} catch (IllegalStateException e) {
-				mBtClient.alarm_fail(e.toString());
-			} catch (IOException e) {
-				mBtClient.alarm_fail(e.toString());
-			}
-			player.setAudioStreamType(AudioManager.STREAM_ALARM);
-	        player.setLooping(true);
-	        try {
-				player.prepare();
-			} catch (IllegalStateException e) {
-				mBtClient.alarm_fail(e.toString());
-			} catch (IOException e) {
-				mBtClient.alarm_fail(e.toString());
-			}
-	        player.start();
+
+			alarm = new SteppedAlarm(getApplicationContext());
+			alarm.setStatusListener(new SteppedAlarmStateListener(){
+
+				@Override
+				public void stateChanged(int state) {
+					Log.i(TAG, "State changed to " + state);
+					
+				}
+
+				@Override
+				public void stateProgressChanged(int progress) {
+					Log.i(TAG, "Progress changed to " + progress);
+					
+				}});
+			alarm.activate();
+
 	        mBtClient.alarm_sounding();
 	        
 		}
 		
 		private void timer_stopped() {
-			if (pending != null) {
-				pending.cancel();
-				pending = null;
-			}
-			if (vibrator != null) {
-				vibrator.cancel();
-				vibrator = null;
-			}				
-			if (player != null) {
-				player.stop();
-				player = null;
-			}
-			
-			
+			alarm.deactivate();
 			mBtClient.alarm_canceled();
 			mNotifyManager.cancel(135);
 			

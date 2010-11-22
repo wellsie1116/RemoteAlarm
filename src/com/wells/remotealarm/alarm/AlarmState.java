@@ -26,22 +26,31 @@ public abstract class AlarmState {
 	protected abstract int vibrateRepeateIndex();
 	
 	protected void applyAudioState(AlarmState current) throws IOException {
-		if (current.audioEnabled() != audioEnabled()) {
-			if (!audioEnabled()) {
-				//we do not use audio
-				if (env.audio.isPlaying())
-					env.audio.stop();
+//		if (current.audioEnabled() != audioEnabled()) {
+		if (audioEnabled()) {
+			//we do use audio
+			env.svcAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 
+					env.svcAudioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM),
+					0);
+			if (current.audioEnabled() && current.audioPath().equals(audioPath())) {
+				//don't interrupt the stream, just set some volume property				
 			} else {
-				//we do use audio
-				env.svcAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 
-													env.svcAudioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM),
-													0);
+				if (current.audioEnabled()) {
+					//stop whatever was playing first
+					env.audio.reset();
+				}
 				env.audio.setDataSource(audioPath());
+//	        	env.audio.setDataSource(getApplicationContext(), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM));
 				env.audio.setAudioStreamType(AudioManager.STREAM_ALARM);
 		        env.audio.setLooping(true);
 		        env.audio.prepare();
-		        env.audio.start();
-			}
+		        env.audio.start();				
+			}			
+
+		} else {
+			//we do not use audio
+			if (env.audio.isPlaying())
+				env.audio.stop();	
 		}
 	}
 	

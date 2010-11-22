@@ -13,9 +13,9 @@ public class LightAudioState extends AlarmState {
 	@Override
 	protected void setProgress(int step) {
 		int max = env.svcAudioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
-		
+		int vol = step / (100 / max);
 		env.svcAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 
-				step / (100 / max),
+				vol,
 				0);
 	}
 	
