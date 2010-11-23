@@ -1,11 +1,9 @@
 package com.wells.remotealarm;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -13,11 +11,18 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.wells.remotealarm.alarm.ShakerListener;
+import com.wells.remotealarm.alarm.ShakerManager;
+
 public class MainActivity extends Activity {
+	
+	private static final String TAG = "MainActivity";
 	
     private TextView lblText;
     private EditText txtHours;
     private EditText txtMinutes;
+    
+    private ShakerManager shakerManager;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,7 +42,22 @@ public class MainActivity extends Activity {
 			}
 		});
         
+        shakerManager = new ShakerManager(getApplicationContext());
+        shakerManager.addListener(new ShakerListener() {
+			@Override
+			public void shakeReceived(float amount) {
+				Log.d(TAG, String.format("Shake amount: %f", amount));
+			}
+		});
+        shakerManager.activate();
     }
+    
+    @Override
+    public void onDestroy() {
+    	shakerManager.deactivate();
+    	super.onDestroy();
+    }
+    
     
     /*private BluetoothDevice findMe(BluetoothAdapter bt) {
         for (BluetoothDevice device : bt.getBondedDevices()) {
