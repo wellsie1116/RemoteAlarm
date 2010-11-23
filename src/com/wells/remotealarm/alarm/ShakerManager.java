@@ -14,6 +14,8 @@ public class ShakerManager {
 	
 	private static final String TAG = "ShakerManager";
 	
+	private boolean active = false;
+	
 	private List<ShakerListener> listeners;
 
 	private SensorEventListener sensorListener;
@@ -26,16 +28,20 @@ public class ShakerManager {
 		listeners = new LinkedList<ShakerListener>();
 	}
 	
-	public void addListener(ShakerListener listener) {
+	public boolean addListener(ShakerListener listener) {
 		listeners.add(listener);
+		if (!active)
+			return active = activate();
+		return true;
 	}
 	
-	public boolean activate() {
-		if (sensor != null) {
-			Log.e(TAG, "Already Activated");
-			return false;
-		}
-		
+	public void removeListener(ShakerListener listener) {
+		listeners.remove(listener);
+		if (listeners.size() == 0)
+			deactivate();		
+	}
+	
+	private boolean activate() {
 		initSensorListener();
         List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
         if (sensors.size() > 0) {
@@ -45,7 +51,7 @@ public class ShakerManager {
         return false;
 	}
 	
-	public void deactivate() {
+	private void deactivate() {
 		sensorManager.unregisterListener(sensorListener, sensor);
 		sensor = null;
 		initSensorListener(); 

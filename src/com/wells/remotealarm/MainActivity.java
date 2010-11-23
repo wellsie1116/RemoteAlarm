@@ -23,6 +23,7 @@ public class MainActivity extends Activity {
     private EditText txtMinutes;
     
     private ShakerManager shakerManager;
+    private ShakerListener shakerListener;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,18 +44,17 @@ public class MainActivity extends Activity {
 		});
         
         shakerManager = new ShakerManager(getApplicationContext());
-        shakerManager.addListener(new ShakerListener() {
+        shakerManager.addListener(shakerListener = new ShakerListener() {
 			@Override
 			public void shakeReceived(float amount) {
 				Log.d(TAG, String.format("Shake amount: %f", amount));
 			}
 		});
-        shakerManager.activate();
     }
     
     @Override
     public void onDestroy() {
-    	shakerManager.deactivate();
+    	shakerManager.removeListener(shakerListener);
     	super.onDestroy();
     }
     
