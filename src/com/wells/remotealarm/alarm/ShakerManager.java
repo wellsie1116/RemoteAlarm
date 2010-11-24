@@ -8,11 +8,12 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.util.Log;
 
 public class ShakerManager {
 	
 	private static final String TAG = "ShakerManager";
+	
+	private static ShakerManager instance = null;
 	
 	private boolean active = false;
 	
@@ -23,9 +24,15 @@ public class ShakerManager {
 	private SensorManager sensorManager;
 	private Sensor sensor;
 
-	public ShakerManager(Context context) {
+	private ShakerManager(Context context) {
 		sensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
 		listeners = new LinkedList<ShakerListener>();
+	}
+	
+	public static ShakerManager getInstance(Context context) {
+		if (instance == null)
+			instance = new ShakerManager(context.getApplicationContext());
+		return instance;
 	}
 	
 	public boolean addListener(ShakerListener listener) {
@@ -54,6 +61,7 @@ public class ShakerManager {
 	private void deactivate() {
 		sensorManager.unregisterListener(sensorListener, sensor);
 		sensor = null;
+		active = false;
 		initSensorListener(); 
 	}
 	

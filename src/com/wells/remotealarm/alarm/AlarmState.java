@@ -26,7 +26,6 @@ public abstract class AlarmState {
 	protected abstract int vibrateRepeateIndex();
 	
 	protected void applyAudioState(AlarmState current) throws IOException {
-//		if (current.audioEnabled() != audioEnabled()) {
 		if (audioEnabled()) {
 			//we do use audio
 			env.svcAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 
@@ -49,8 +48,7 @@ public abstract class AlarmState {
 
 		} else {
 			//we do not use audio
-			if (env.audio.isPlaying())
-				env.audio.stop();	
+			env.audio.reset();	
 		}
 	}
 	

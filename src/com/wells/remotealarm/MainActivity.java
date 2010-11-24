@@ -2,7 +2,10 @@ package com.wells.remotealarm;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -22,39 +25,56 @@ public class MainActivity extends Activity {
     private EditText txtHours;
     private EditText txtMinutes;
     
-    private ShakerManager shakerManager;
-    private ShakerListener shakerListener;
+//    private ShakerListener shakerListener;
+    
+    private SharedPreferences mPrefs;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-      
+
+        mPrefs = getSharedPreferences(Const.PREF_NAME, MODE_PRIVATE);
+        
         lblText = (TextView)findViewById(R.id.lblText);
         txtHours = (EditText)findViewById(R.id.txtHours);
+        txtHours.setInputType(InputType.TYPE_CLASS_NUMBER);
         txtMinutes = (EditText)findViewById(R.id.txtMinutes);
+        txtMinutes.setInputType(InputType.TYPE_CLASS_NUMBER);
+        
+        txtHours.setText(mPrefs.getString(Const.PREF_HOURS, "0"));
+        txtMinutes.setText(mPrefs.getString(Const.PREF_MINUTES, "25"));
         
         Button btnStart = (Button)findViewById(R.id.btnStart);
         
-        btnStart.setOnClickListener(new OnClickListener(){
+        btnStart.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				btnStart_clicked();
 			}
 		});
         
-        shakerManager = new ShakerManager(getApplicationContext());
-        shakerManager.addListener(shakerListener = new ShakerListener() {
-			@Override
-			public void shakeReceived(float amount) {
-				Log.d(TAG, String.format("Shake amount: %f", amount));
-			}
-		});
+//        shakerManager = ShakerManager.getInstance(this);
+//        shakerManager.addListener(shakerListener = new ShakerListener() {
+//			@Override
+//			public void shakeReceived(float amount) {
+//				Log.d(TAG, String.format("Shake amount: %f", amount));
+//			}
+//		});
+    }
+    
+    @Override
+    public void onPause() {
+    	super.onPause();
+    	Editor edits = mPrefs.edit();
+    	edits.putString(Const.PREF_HOURS, txtHours.getText().toString());
+    	edits.putString(Const.PREF_MINUTES, txtMinutes.getText().toString());
+    	edits.commit();
     }
     
     @Override
     public void onDestroy() {
-    	shakerManager.removeListener(shakerListener);
+//    	shakerManager.removeListener(shakerListener);
     	super.onDestroy();
     }
     

@@ -19,10 +19,12 @@ public class BluetoothClient {
 	}
 	
 	private BluetoothSocket makeSocket() throws IOException {
-		BluetoothDevice device = bt.getRemoteDevice("00:21:86:0A:CC:E0");
-		BluetoothSocket socket = device.createRfcommSocketToServiceRecord(UUID.fromString("00e130e3-02f8-4652-9214-5fe6ef394c56"));
-		socket.connect();
-		return socket;
+		//TODO: implement
+		throw new IOException();
+//		BluetoothDevice device = bt.getRemoteDevice("00:21:86:0A:CC:E0");
+//		BluetoothSocket socket = device.createRfcommSocketToServiceRecord(UUID.fromString("00e130e3-02f8-4652-9214-5fe6ef394c56"));
+//		socket.connect();
+//		return socket;
 	}
 	
 	public boolean ping() {
@@ -67,6 +69,7 @@ public class BluetoothClient {
 			socket.close();
 			
 		} catch (IOException ex) {
+			Log.e("BluetoothClient", "error", ex);
 			//TODO: log
 		}
 	}
@@ -82,6 +85,7 @@ public class BluetoothClient {
 			socket.close();
 			
 		} catch (IOException ex) {
+			Log.e("BluetoothClient", "error", ex);
 			//TODO: log
 		}
 	}

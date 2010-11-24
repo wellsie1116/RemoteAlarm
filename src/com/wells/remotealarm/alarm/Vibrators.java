@@ -36,7 +36,7 @@ public class Vibrators {
 		//http://thinkandroid.wordpress.com/2010/01/24/handling-screen-off-and-screen-on-intents/
 		if (rebuzz == null) {
 			rebuzz = new Timer();
-			rebuzz.scheduleAtFixedRate(new TimerTask() {
+			rebuzz.schedule(new TimerTask() {
 				@Override
 				public void run() {
 					revibrate();

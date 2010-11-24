@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.util.Log;
@@ -64,8 +65,6 @@ public class AlarmService extends Service {
 
 	
 	
-	
-	
 	private void showNotification() {
         // This is who should be launched if the user selects the app icon in the notification.
         Intent appIntent = new Intent(this, AlarmActivity.class);
@@ -81,6 +80,9 @@ public class AlarmService extends Service {
         nt.setLatestEventInfo(this, "Remote Alarm Clock", "Alarm is currently sounding", pending);
         
         mNotifyManager.notify(135, nt);
+        
+        //open the AlarmActivity
+        startActivity(appIntent);
     }
 
 	
@@ -93,13 +95,12 @@ public class AlarmService extends Service {
 	private PendingIntent pending;
 	
 	public class LocalBinder extends Binder implements IAlarmService {
+		
 		AlarmService getService() {
 			return AlarmService.this;
 		}
 		
 		private AlarmServer server;
-		private MediaPlayer player;
-		private Vibrator vibrator;
 		
 		private SteppedAlarm alarm;
 
@@ -155,11 +156,8 @@ public class AlarmService extends Service {
 		
 		@Override
 		public void timer_elapsed() {
-			showNotification();
-			
-
 			alarm = new SteppedAlarm(getApplicationContext());
-			alarm.setStatusListener(new SteppedAlarmStateListener(){
+			alarm.addStatusListener(new SteppedAlarmStateListener(){
 
 				@Override
 				public void stateChanged(int state) {
@@ -171,15 +169,26 @@ public class AlarmService extends Service {
 				public void stateProgressChanged(int progress) {
 					Log.i(TAG, "Progress changed to " + progress);
 					
+				}
+
+				@Override
+				public void alarmStopped() {
+					Log.i(TAG, "Alarm stopped");
 				}});
+			showNotification();
 			alarm.activate();
 
 	        mBtClient.alarm_sounding();
-	        
+		}
+
+		@Override
+		public SteppedAlarm getAlarm() {
+			return alarm;
 		}
 		
 		private void timer_stopped() {
 			alarm.deactivate();
+			alarm = null;
 			mBtClient.alarm_canceled();
 			mNotifyManager.cancel(135);
 			
@@ -187,6 +196,7 @@ public class AlarmService extends Service {
 	        Vibrator buzz = (Vibrator)getSystemService(VIBRATOR_SERVICE);
 	        buzz.vibrate(new long[] {300, 400, 300}, -1);
 		}
+
 	}
 	
 	
